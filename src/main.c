@@ -10,9 +10,9 @@ struct Vec2 {
   double y;
 };
 
-static const int32_t WIDTH = 800;
-static const int32_t HEIGHT = 800;
-static const size_t BODIES = 100;
+static const int32_t WIDTH = 1280;
+static const int32_t HEIGHT = 1280;
+static const size_t BODIES = 1000;
 static const double MASS = 500000.;
 static const double GRAVITY_CONST = .5;
 static const float RADIUS = 5;
@@ -26,11 +26,6 @@ struct Vec2 vec2_add(struct Vec2 *vec1, struct Vec2 *vec2) {
 
 struct Vec2 vec2_sub(struct Vec2 *vec1, struct Vec2 *vec2) {
   struct Vec2 vec = {.x = vec1->x - vec2->x, .y = vec1->y - vec2->y};
-  return vec;
-}
-
-struct Vec2 vec2_mult(struct Vec2 *vec1, struct Vec2 *vec2) {
-  struct Vec2 vec = {.x = vec1->x * vec2->x, .y = vec1->y * vec2->y};
   return vec;
 }
 
