@@ -75,15 +75,6 @@ void calculate_accelerations(void) {
       accelerations->x[i] -= force * dx;
       accelerations->y[i] -= force * dy;
 
-    /*   struct Vec2 r = vec2_sub(&positions[i], &positions[j]); */
-    /*   double len = vec2_len(&r); */
-    /*   r = vec2_scalar(&r, 1 / len); */
-
-    /*   struct Vec2 added_accel = vec2_scalar(&r, GRAVITY_CONST * (MASS / (len * len))); */
-    /*   accelerations[i] = vec2_sub(&accelerations[i], &added_accel); */
-    /* } */
-
-
     }
   }
 }
