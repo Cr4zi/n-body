@@ -74,7 +74,6 @@ void calculate_accelerations(void) {
       float force = GRAVITY_CONST * (MASS / (len * len));
       accelerations->x[i] -= force * dx;
       accelerations->y[i] -= force * dy;
-
     }
   }
 }
@@ -86,11 +85,11 @@ void calculate_velocities(void) {
     __m256 accel_x = _mm256_loadu_ps(&accelerations->x[i]);
     __m256 accel_y = _mm256_loadu_ps(&accelerations->y[i]);
 
-    __m256 added_accel_x = _mm256_mul_ps(accel_x, dts);
-    __m256 added_accel_y = _mm256_mul_ps(accel_y, dts);
+    __m256 old_vel_x = _mm256_loadu_ps(&velocities->x[i]);
+    __m256 old_vel_y = _mm256_loadu_ps(&velocities->y[i]);
 
-    __m256 vel_x = _mm256_add_ps(_mm256_loadu_ps(&velocities->x[i]), added_accel_x);
-    __m256 vel_y = _mm256_add_ps(_mm256_loadu_ps(&velocities->y[i]), added_accel_y);
+    __m256 vel_x = _mm256_fmadd_ps(accel_x, dts, old_vel_x);
+    __m256 vel_y = _mm256_fmadd_ps(accel_y, dts, old_vel_y);
 
     _mm256_storeu_ps(&velocities->x[i], vel_x);
     _mm256_storeu_ps(&velocities->y[i], vel_y);
@@ -105,11 +104,11 @@ void calculate_positions(void) {
     __m256 vel_x = _mm256_loadu_ps(&velocities->x[i]);
     __m256 vel_y = _mm256_loadu_ps(&velocities->y[i]);
 
-    __m256 added_vel_x = _mm256_mul_ps(vel_x, dts);
-    __m256 added_vel_y = _mm256_mul_ps(vel_y, dts);
+    __m256 old_pos_x = _mm256_loadu_ps(&positions->x[i]);
+    __m256 old_pos_y = _mm256_loadu_ps(&positions->y[i]);
 
-    __m256 pos_x = _mm256_add_ps(_mm256_loadu_ps(&positions->x[i]), added_vel_x);
-    __m256 pos_y = _mm256_add_ps(_mm256_loadu_ps(&positions->y[i]), added_vel_y);
+    __m256 pos_x = _mm256_fmadd_ps(vel_x, dts, old_pos_x);
+    __m256 pos_y = _mm256_fmadd_ps(vel_y, dts, old_pos_y);
 
     _mm256_storeu_ps(&positions->x[i], pos_x);
     _mm256_storeu_ps(&positions->y[i], pos_y);
