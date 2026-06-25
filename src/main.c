@@ -14,7 +14,7 @@ struct Vec2 {
 
 static const int32_t WIDTH = 1280;
 static const int32_t HEIGHT = 1280;
-static const size_t BODIES = 400; // multiples of 8
+static const size_t BODIES = 16; // multiples of 8
 static const double MASS = 500000.;
 static const double GRAVITY_CONST = .5;
 static const float RADIUS = 5;
@@ -64,14 +64,14 @@ void calculate_accelerations(void) {
   __m256 zeroes = _mm256_broadcast_ss(&zero);
   __m256 ones = _mm256_broadcast_ss(&one);
   __m256 mass_gs = _mm256_broadcast_ss(&mass_g);
-  
+
   for (size_t i = 0; i < BODIES; i += 8) {
     __m256 accel_x = _mm256_broadcast_ss(&zero);
     __m256 accel_y = _mm256_broadcast_ss(&zero);
 
     for (size_t j = 0; j < BODIES; ++j) {
-      __m256 dx = _mm256_sub_ps(_mm256_loadu_ps(&positions->x[i]), _mm256_loadu_ps(&positions->x[j]));
-      __m256 dy = _mm256_sub_ps(_mm256_loadu_ps(&positions->y[i]), _mm256_loadu_ps(&positions->y[j]));
+      __m256 dx = _mm256_sub_ps(_mm256_loadu_ps(&positions->x[i]), _mm256_broadcast_ss(&positions->x[j]));
+      __m256 dy = _mm256_sub_ps(_mm256_loadu_ps(&positions->y[i]), _mm256_broadcast_ss(&positions->y[j]));
       __m256 dist = _mm256_sqrt_ps(_mm256_fmadd_ps(dx, dx, _mm256_mul_ps(dy, dy)));
 
       __m256 cmp_mask = _mm256_cmp_ps(dist, zeroes, _CMP_EQ_OQ);
