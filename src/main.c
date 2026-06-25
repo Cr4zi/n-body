@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <math.h>
+#include <time.h>
 #include <string.h>
 
 struct Vec2 {
@@ -14,7 +14,7 @@ struct Vec2 {
 
 static const int32_t WIDTH = 1280;
 static const int32_t HEIGHT = 1280;
-static const size_t BODIES = 16; // multiples of 8
+static const size_t BODIES = 5000; // multiples of 8
 static const double MASS = 500000.;
 static const double GRAVITY_CONST = .5;
 static const float RADIUS = 5;
@@ -146,8 +146,12 @@ int main(void) {
   InitWindow(WIDTH, HEIGHT, "N-Body");
   SetTargetFPS(60);
 
+  clock_t time;
   while (!WindowShouldClose()) {
+    time = clock();
     simulate();
+    time = clock() - time;
+    printf("Took %f seconds to calculate sim\n", (float)time / CLOCKS_PER_SEC);
     
     BeginDrawing();
     ClearBackground(BLACK);
