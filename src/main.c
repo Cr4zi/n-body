@@ -155,6 +155,8 @@ int main(void) {
     draw_bodies();
     EndDrawing();
   }
+
+  CloseWindow();
   
   deinit();
   return 0;
