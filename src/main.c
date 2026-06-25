@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
 
 struct Vec2 {
   float *x;
@@ -13,7 +14,7 @@ struct Vec2 {
 
 static const int32_t WIDTH = 1280;
 static const int32_t HEIGHT = 1280;
-static const size_t BODIES = 240;
+static const size_t BODIES = 400; // multiples of 8
 static const double MASS = 500000.;
 static const double GRAVITY_CONST = .5;
 static const float RADIUS = 5;
@@ -57,24 +58,37 @@ void deinit(void) {
 }
 
 void calculate_accelerations(void) {
-  for (size_t i = 0; i < BODIES; ++i) {
-    accelerations->x[i] = 0;
-    accelerations->y[i] = 0;
+  float mass_g = GRAVITY_CONST * MASS;
+  float zero = 0, one = 1;
+
+  __m256 zeroes = _mm256_broadcast_ss(&zero);
+  __m256 ones = _mm256_broadcast_ss(&one);
+  __m256 mass_gs = _mm256_broadcast_ss(&mass_g);
+  
+  for (size_t i = 0; i < BODIES; i += 8) {
+    __m256 accel_x = _mm256_broadcast_ss(&zero);
+    __m256 accel_y = _mm256_broadcast_ss(&zero);
 
     for (size_t j = 0; j < BODIES; ++j) {
-      if (i == j)
-        continue;
+      __m256 dx = _mm256_sub_ps(_mm256_loadu_ps(&positions->x[i]), _mm256_loadu_ps(&positions->x[j]));
+      __m256 dy = _mm256_sub_ps(_mm256_loadu_ps(&positions->y[i]), _mm256_loadu_ps(&positions->y[j]));
+      __m256 dist = _mm256_sqrt_ps(_mm256_fmadd_ps(dx, dx, _mm256_mul_ps(dy, dy)));
 
-      float dx = positions->x[i] - positions->x[j];
-      float dy = positions->y[i] - positions->y[j];
-      float len = sqrt(dx * dx + dy * dy);
-      dx /= len;
-      dy /= len;
-      
-      float force = GRAVITY_CONST * (MASS / (len * len));
-      accelerations->x[i] -= force * dx;
-      accelerations->y[i] -= force * dy;
+      __m256 cmp_mask = _mm256_cmp_ps(dist, zeroes, _CMP_EQ_OQ);
+
+      dist = _mm256_blendv_ps(dist, ones, cmp_mask);
+      dx = _mm256_div_ps(dx, dist);
+      dy = _mm256_div_ps(dy, dist);
+
+      __m256 force = _mm256_div_ps(mass_gs, _mm256_mul_ps(dist, dist));
+      force = _mm256_blendv_ps(force, zeroes, cmp_mask);
+
+      accel_x = _mm256_fnmadd_ps(force, dx, accel_x);
+      accel_y = _mm256_fnmadd_ps(force, dy, accel_y);
     }
+
+    _mm256_storeu_ps(&accelerations->x[i], accel_x);
+    _mm256_storeu_ps(&accelerations->y[i], accel_y);
   }
 }
 
