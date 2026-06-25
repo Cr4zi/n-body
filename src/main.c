@@ -59,29 +59,25 @@ void deinit(void) {
 
 void calculate_accelerations(void) {
   float mass_g = GRAVITY_CONST * MASS;
-  float zero = 0, one = 1;
+  float zero = 0, two_radius = 2 * RADIUS;
 
-  __m256 zeroes = _mm256_broadcast_ss(&zero);
-  __m256 ones = _mm256_broadcast_ss(&one);
   __m256 mass_gs = _mm256_broadcast_ss(&mass_g);
+  __m256 zeroes = _mm256_broadcast_ss(&zero);
+  __m256 two_radiuses = _mm256_broadcast_ss(&two_radius);
 
   for (size_t i = 0; i < BODIES; i += 8) {
-    __m256 accel_x = _mm256_broadcast_ss(&zero);
-    __m256 accel_y = _mm256_broadcast_ss(&zero);
+    __m256 accel_x = zeroes;
+    __m256 accel_y = zeroes;
 
     for (size_t j = 0; j < BODIES; ++j) {
       __m256 dx = _mm256_sub_ps(_mm256_loadu_ps(&positions->x[i]), _mm256_broadcast_ss(&positions->x[j]));
       __m256 dy = _mm256_sub_ps(_mm256_loadu_ps(&positions->y[i]), _mm256_broadcast_ss(&positions->y[j]));
-      __m256 dist = _mm256_sqrt_ps(_mm256_fmadd_ps(dx, dx, _mm256_mul_ps(dy, dy)));
 
-      __m256 cmp_mask = _mm256_cmp_ps(dist, zeroes, _CMP_EQ_OQ);
+      __m256 dist = _mm256_max_ps(_mm256_fmadd_ps(dx, dx, _mm256_mul_ps(dy, dy)), two_radiuses);
 
-      dist = _mm256_blendv_ps(dist, ones, cmp_mask);
-      dx = _mm256_div_ps(dx, dist);
-      dy = _mm256_div_ps(dy, dist);
+      dist = _mm256_rsqrt_ps(dist);
 
-      __m256 force = _mm256_div_ps(mass_gs, _mm256_mul_ps(dist, dist));
-      force = _mm256_blendv_ps(force, zeroes, cmp_mask);
+      __m256 force = _mm256_mul_ps(mass_gs, _mm256_mul_ps(dist, _mm256_mul_ps(dist, dist)));
 
       accel_x = _mm256_fnmadd_ps(force, dx, accel_x);
       accel_y = _mm256_fnmadd_ps(force, dy, accel_y);
@@ -144,14 +140,14 @@ void draw_bodies(void) {
 int main(void) {
   init();
   InitWindow(WIDTH, HEIGHT, "N-Body");
-  SetTargetFPS(60);
+  // SetTargetFPS(60);
 
   clock_t time;
   while (!WindowShouldClose()) {
     time = clock();
     simulate();
     time = clock() - time;
-    printf("Took %f seconds to calculate sim\n", (float)time / CLOCKS_PER_SEC);
+    printf("Took %f ms to calculate sim\n", (float)time * 1000 / CLOCKS_PER_SEC);
     
     BeginDrawing();
     ClearBackground(BLACK);

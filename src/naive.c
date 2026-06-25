@@ -13,7 +13,7 @@ struct Vec2 {
 
 static const int32_t WIDTH = 1280;
 static const int32_t HEIGHT = 1280;
-static const size_t BODIES = 5000;
+static const size_t BODIES = 5000; // multiples of 8
 static const double MASS = 500000.;
 static const double GRAVITY_CONST = .5;
 static const float RADIUS = 5;
@@ -73,11 +73,9 @@ void calculate_accelerations(void) {
     accelerations[i].y = 0;
 
     for (size_t j = 0; j < BODIES; ++j) {
-      if (i == j)
-        continue;
-
       struct Vec2 r = vec2_sub(&positions[i], &positions[j]);
       double len = vec2_len(&r);
+      len = len <= 2 * RADIUS ? RADIUS : len;
       r = vec2_scalar(&r, 1 / len);
 
       struct Vec2 added_accel = vec2_scalar(&r, GRAVITY_CONST * (MASS / (len * len)));
