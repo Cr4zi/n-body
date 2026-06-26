@@ -58,12 +58,9 @@ void deinit(void) {
 }
 
 void calculate_accelerations(void) {
-  float mass_g = GRAVITY_CONST * MASS;
-  float zero = 0, two_radius = 2 * RADIUS;
-
-  __m256 mass_gs = _mm256_broadcast_ss(&mass_g);
-  __m256 zeroes = _mm256_broadcast_ss(&zero);
-  __m256 two_radiuses = _mm256_broadcast_ss(&two_radius);
+  __m256 mass_gs = _mm256_set1_ps(GRAVITY_CONST * MASS);
+  __m256 zeroes = _mm256_setzero_ps();
+  __m256 two_radiuses = _mm256_set1_ps(2 * RADIUS);
 
   for (size_t i = 0; i < BODIES; i += 8) {
     __m256 accel_x = zeroes;
